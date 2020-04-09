@@ -11,18 +11,21 @@ db = firestore.client()
 
 # Fetch data from Ontario Public Health API
 URL = "https://data.ontario.ca/api/3/action/datastore_search?resource_id=455fd63b-603d-4608-8216-7d8647f43350"
-LIMIT = 1000
+LIMIT = 10000  # Should reflect Max number of cases in Ontario
 OFFSET = 0
 QUERY = f'{URL}&limit={LIMIT}&offset={OFFSET}'
+
+generic_data_ref = db.collection(u'ontarioData').document(u'generic')
 
 response = requests.get(QUERY).text
 response_data = json.loads(response)
 results = response_data.get("result")
 records = results.get("records")
 
+TOTAL_RESULTS = results.get("total")
+
 
 # Data transformation and write to db
-
 def writeCovidDataToDb(limit, write_offset):
     data_to_write = []
 
@@ -64,9 +67,10 @@ def writeCovidDataToDb(limit, write_offset):
         })
 
 
-# Write to db in chunks since firestore does not accept large peices of data
-WRITE_OFFSET = 10
-for limit in range(0, 100, WRITE_OFFSET):
+# Write to db in chunks of 'WRITE_OFFSET' since firestore does not accept large peices of data
+WRITE_OFFSET = 200
+
+for limit in range(0, TOTAL_RESULTS, WRITE_OFFSET):
     writeCovidDataToDb(limit, WRITE_OFFSET)
 
 # To read data from genericData document
