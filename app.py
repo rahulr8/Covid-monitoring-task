@@ -9,25 +9,54 @@ cred = credentials.Certificate(
 default_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+# Fetch data from Ontario Public Health API
 URL = "https://data.ontario.ca/api/3/action/datastore_search?resource_id=455fd63b-603d-4608-8216-7d8647f43350"
 LIMIT = 5
 OFFSET = 0
-
 QUERY = f'{URL}&limit={LIMIT}&offset={OFFSET}'
 
 response = requests.get(QUERY).text
 response_data = json.loads(response)
+results = response_data.get("result")
+records = results.get("records")
 
-print(json.dumps(response_data, indent=4))
 
-# quote = "Yep quote"
-# author = "Nope author"
+# Data transformation
+data_to_write = []
 
-# doc_ref = db.collection(u'sampleData').document(u'inspiration')
-# doc_ref.set({
-#     u'quote': quote,
-#     u'author': author,
-# })
+for record in records:
+    id = record["ROW_ID"]
+    episode_date = record["ACCURATE_EPISODE_DATE"]
+    age_group = record["Age_Group"]
+    gender = record["CLIENT_GENDER"]
+    case_outcome = record["OUTCOME1"]
+    reporting_phu_address = record["Reporting_PHU_Address"]
+    reporting_phu_city = record["Reporting_PHU_City"]
+    reporting_phu_latitude = record["Reporting_PHU_Latitude"]
+    reporting_phu_longitude = record["Reporting_PHU_Longitude"]
+    reporting_phu_postal_code = record["Reporting_PHU_Postal_Code"]
 
-# doc = doc_ref.get()
-# print(doc.to_dict())
+    data_to_write.append({
+        "id": id,
+        "episode_date": episode_date,
+        "age_group": age_group,
+        "gender": gender,
+        "case_outcome": case_outcome,
+        "reporting_phu_address": reporting_phu_address,
+        "reporting_phu_city": reporting_phu_city,
+        "reporting_phu_latitude": reporting_phu_latitude,
+        "reporting_phu_longitude": reporting_phu_longitude,
+        "reporting_phu_postal_code": reporting_phu_postal_code,
+    })
+
+# Write to cloud firestore
+generic_data_ref = db.collection(u'ontarioData').document(u'generic')
+generic_data_ref.set({
+    "data": data_to_write
+})
+
+
+# To read data from genericData document
+# covid_data = generic_data_ref.get()
+# covid_data_dict = covid_data.to_dict()
+# print(covid_data_dict)
