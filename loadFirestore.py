@@ -4,8 +4,7 @@ import json
 from firebase_admin import credentials, firestore
 
 # Setup Firestore db
-cred = credentials.Certificate(
-    "./serviceAccountKey.json")
+cred = credentials.Certificate("./serviceAccountKey.json")
 default_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -14,8 +13,6 @@ URL = "https://data.ontario.ca/api/3/action/datastore_search?resource_id=455fd63
 LIMIT = 10000  # Should reflect Max number of cases in Ontario
 OFFSET = 0
 QUERY = f'{URL}&limit={LIMIT}&offset={OFFSET}'
-
-generic_data_ref = db.collection(u'ontarioData').document(u'generic')
 
 response = requests.get(QUERY).text
 response_data = json.loads(response)
@@ -26,7 +23,7 @@ TOTAL_RESULTS = results.get("total")
 
 
 # Data transformation and write to db
-def writeCovidDataToDb(limit, write_offset):
+def writeCovidDataToDb(limit, write_offset, total_results):
     data_to_write = []
 
     for record in records[limit:limit+write_offset]:
@@ -55,25 +52,19 @@ def writeCovidDataToDb(limit, write_offset):
         })
 
     # Write to cloud firestore
-    generic_data_ref = db.collection(u'ontarioData').document(u'generic')
+    LOWER_LIMIT = limit
+    UPPER_LIMIT = min(limit + write_offset, total_results)
 
-    if limit == 0:
-        generic_data_ref.set({
-            "data": data_to_write
-        })
-    else:
-        generic_data_ref.update({
-            "data": firestore.ArrayUnion(data_to_write)
-        })
+    generic_data_ref = db.collection(
+        u'ontarioData').document(f'range-{LOWER_LIMIT}-{UPPER_LIMIT}')
+
+    generic_data_ref.set({
+        "data": data_to_write
+    })
 
 
-# Write to db in chunks of 'WRITE_OFFSET' since firestore does not accept large peices of data
-WRITE_OFFSET = 200
+# Write to db in chunks of 'WRITE_OFFSET' since firestore does not accept large pieces of data
+WRITE_OFFSET = 500
 
 for limit in range(0, TOTAL_RESULTS, WRITE_OFFSET):
-    writeCovidDataToDb(limit, WRITE_OFFSET)
-
-# To read data from genericData document
-# covid_data = generic_data_ref.get()
-# covid_data_dict = covid_data.to_dict()
-# print(covid_data_dict)
+    writeCovidDataToDb(limit, WRITE_OFFSET, TOTAL_RESULTS)

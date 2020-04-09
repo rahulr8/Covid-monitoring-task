@@ -1,5 +1,0 @@
-{
-  "python.linting.pylintEnabled": true,
-  "python.linting.enabled": true,
-  "python.pythonPath": "/Users/rahulio/Apps/Learning/Python-projects/Covid_Monitoring/test_env_covid/bin/python3.7"
-}
