@@ -11,7 +11,7 @@ db = firestore.client()
 
 # Fetch data from Ontario Public Health API
 URL = "https://data.ontario.ca/api/3/action/datastore_search?resource_id=455fd63b-603d-4608-8216-7d8647f43350"
-LIMIT = 5
+LIMIT = 100
 OFFSET = 0
 QUERY = f'{URL}&limit={LIMIT}&offset={OFFSET}'
 
