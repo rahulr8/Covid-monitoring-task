@@ -26,8 +26,19 @@ acquisition_type_data = {
     "unknown": 0,
 }
 
+# Outcome_data
+outcome_type_data = {
+    "active_cases": 0,
+    "recovered_cases": 0,
+    "fatal_cases": 0,
+}
+
+# Reporting city data
+reporting_city_data = {}
 
 # Write data to firestore db
+
+
 def writeCovidDataToDb(limit, write_offset, total_results, records, db):
 
     for record in records[limit:limit+write_offset]:
@@ -46,14 +57,16 @@ def writeCovidDataToDb(limit, write_offset, total_results, records, db):
         # Create emergent data here
         # postGenderData(db, gender)
         # postAgeGroupData(db, age_group)
-        postacquisitionData(db, acquisition_info)
+        # postacquisitionData(db, acquisition_info)
+        # postOutcomeData(db, case_outcome)
+        postReportingCityData(db, reporting_phu_city)
 
         # Post emergent data to db
 
         # Finally post raw data to db
         # postRawDataToDb(db, limit, write_offset, total_results)
 
-    print(acquisition_type_data)
+    print(reporting_city_data)
 
 
 def postRawDataToDb(db, limit, write_offset, total_results):
@@ -85,17 +98,13 @@ def postRawDataToDb(db, limit, write_offset, total_results):
 
 
 def postGenderData(db, gender):
-    GENDER_MALE = "MALE"
-    GENDER_FEMALE = "FEMALE"
-
-    if(gender == GENDER_MALE):
+    if(gender == "MALE"):
         gender_data["total_male"] += 1
-    elif(gender == GENDER_FEMALE):
+    elif(gender == "FEMALE"):
         gender_data["total_female"] += 1
 
 
 def postAgeGroupData(db, age_group):
-
     if(age_group == "<20"):
         age_group_data["<20"] += 1
     elif(age_group == "20s"):
@@ -127,3 +136,19 @@ def postacquisitionData(db, acquisition_info):
         acquisition_type_data["unknown"] += 1
     elif(acquisition_info == "Neither"):
         acquisition_type_data["neither"] += 1
+
+
+def postOutcomeData(db, case_outcome):
+    if(case_outcome == "Not Resolved"):
+        outcome_type_data["active_cases"] += 1
+    elif(case_outcome == "Resolved"):
+        outcome_type_data["recovered_cases"] += 1
+    elif(case_outcome == "Fatal"):
+        outcome_type_data["fatal_cases"] += 1
+
+
+def postReportingCityData(db, reporting_phu_city):
+    if(reporting_phu_city in reporting_city_data):
+        reporting_city_data[reporting_phu_city] += 1
+    else:
+        reporting_city_data[reporting_phu_city] = 1
