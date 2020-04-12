@@ -36,9 +36,8 @@ outcome_type_data = {
 # Reporting city data
 reporting_city_data = {}
 
+
 # Write data to firestore db
-
-
 def writeCovidDataToDb(limit, write_offset, total_results, records, db):
 
     for record in records[limit:limit+write_offset]:
@@ -55,41 +54,43 @@ def writeCovidDataToDb(limit, write_offset, total_results, records, db):
         reporting_phu_postal_code = record["Reporting_PHU_Postal_Code"]
 
         # Create emergent data here
-        # postGenderData(db, gender)
-        # postAgeGroupData(db, age_group)
-        # postacquisitionData(db, acquisition_info)
-        # postOutcomeData(db, case_outcome)
-        postReportingCityData(db, reporting_phu_city)
+        createGenderData(db, gender)
+        createAgeGroupData(db, age_group)
+        createacquisitionData(db, acquisition_info)
+        createOutcomeData(db, case_outcome)
+        createReportingCityData(db, reporting_phu_city)
 
-        # Post emergent data to db
+    # Post extracted data to db
+    postExtractedData(
+        db,
+        gender_data,
+        age_group_data,
+        acquisition_type_data,
+        outcome_type_data,
+        reporting_city_data,
+    )
 
-        # Finally post raw data to db
-        # postRawDataToDb(db, limit, write_offset, total_results)
-
-    print(reporting_city_data)
-
-
-def postRawDataToDb(db, limit, write_offset, total_results):
-    data_to_write = []
-    data_to_write.append({
-        "id": id,
-        "episode_date": episode_date,
-        "age_group": age_group,
-        "gender": gender,
-        "case_outcome": case_outcome,
-        "reporting_phu_address": reporting_phu_address,
-        "reporting_phu_city": reporting_phu_city,
-        "reporting_phu_latitude": reporting_phu_latitude,
-        "reporting_phu_longitude": reporting_phu_longitude,
-        "reporting_phu_postal_code": reporting_phu_postal_code,
-    })
+    # Uncomment if you want to post raw data to db
+    # data_to_write = []
+    # data_to_write.append({
+    #     "id": id,
+    #     "episode_date": episode_date,
+    #     "age_group": age_group,
+    #     "gender": gender,
+    #     "case_outcome": case_outcome,
+    #     "reporting_phu_address": reporting_phu_address,
+    #     "reporting_phu_city": reporting_phu_city,
+    #     "reporting_phu_latitude": reporting_phu_latitude,
+    #     "reporting_phu_longitude": reporting_phu_longitude,
+    #     "reporting_phu_postal_code": reporting_phu_postal_code,
+    # })
 
     # Write to cloud firestore
-    LOWER_LIMIT = limit
-    UPPER_LIMIT = min(limit + write_offset, total_results)
+    # LOWER_LIMIT = limit
+    # UPPER_LIMIT = min(limit + write_offset, total_results)
 
-    generic_data_ref = db.collection(
-        u'ontarioData').document(f'range-{LOWER_LIMIT}-{UPPER_LIMIT}')
+    # generic_data_ref = db.collection(
+    #     u'ontarioData').document(f'range-{LOWER_LIMIT}-{UPPER_LIMIT}')
 
     # Post to db
     # generic_data_ref.set({
@@ -97,14 +98,16 @@ def postRawDataToDb(db, limit, write_offset, total_results):
     # })
 
 
-def postGenderData(db, gender):
+def createGenderData(db, gender):
     if(gender == "MALE"):
         gender_data["total_male"] += 1
     elif(gender == "FEMALE"):
         gender_data["total_female"] += 1
 
+    return gender_data
 
-def postAgeGroupData(db, age_group):
+
+def createAgeGroupData(db, age_group):
     if(age_group == "<20"):
         age_group_data["<20"] += 1
     elif(age_group == "20s"):
@@ -126,8 +129,10 @@ def postAgeGroupData(db, age_group):
     elif(age_group == "Unknown"):
         age_group_data["Unknown"] += 1
 
+    return age_group_data
 
-def postacquisitionData(db, acquisition_info):
+
+def createacquisitionData(db, acquisition_info):
     if(acquisition_info == "Contact of a confirmed case"):
         acquisition_type_data["community_spread"] += 1
     elif(acquisition_info == "Travel-Related"):
@@ -137,8 +142,10 @@ def postacquisitionData(db, acquisition_info):
     elif(acquisition_info == "Neither"):
         acquisition_type_data["neither"] += 1
 
+    return acquisition_type_data
 
-def postOutcomeData(db, case_outcome):
+
+def createOutcomeData(db, case_outcome):
     if(case_outcome == "Not Resolved"):
         outcome_type_data["active_cases"] += 1
     elif(case_outcome == "Resolved"):
@@ -146,9 +153,43 @@ def postOutcomeData(db, case_outcome):
     elif(case_outcome == "Fatal"):
         outcome_type_data["fatal_cases"] += 1
 
+    return outcome_type_data
 
-def postReportingCityData(db, reporting_phu_city):
+
+def createReportingCityData(db, reporting_phu_city):
     if(reporting_phu_city in reporting_city_data):
         reporting_city_data[reporting_phu_city] += 1
     else:
         reporting_city_data[reporting_phu_city] = 1
+
+    return reporting_city_data
+
+
+def postExtractedData(db, data_for_gender, data_for_age, data_for_acquisition, data_for_outcome, data_for_city):
+    batch = db.batch()
+    data_for_gender_ref = db.collection(
+        u'ontarioData').document(u'data_for_gender')
+    # data_for_gender_ref.set(gender_data)
+    batch.set(data_for_gender_ref, gender_data)
+
+    data_for_age_ref = db.collection(
+        u'ontarioData').document(u'data_for_age_group')
+    # data_for_age_ref.set(age_group_data)
+    batch.set(data_for_age_ref, age_group_data)
+
+    data_for_acquisition_type_ref = db.collection(
+        u'ontarioData').document(u'data_for_acquisition_type')
+    # data_for_acquisition_type_ref.set(acquisition_type_data)
+    batch.set(data_for_acquisition_type_ref, acquisition_type_data)
+
+    data_for_outcome_type_ref = db.collection(
+        u'ontarioData').document(u'data_for_outcome_type')
+    # data_for_outcome_type_ref.set(outcome_type_data)
+    batch.set(data_for_outcome_type_ref, outcome_type_data)
+
+    data_for_reporting_city_ref = db.collection(
+        u'ontarioData').document(u'data_for_reporting_city')
+    # data_for_reporting_city_ref.set(reporting_city_data)
+    batch.set(data_for_reporting_city_ref, reporting_city_data)
+
+    batch.commit()
