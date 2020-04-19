@@ -169,27 +169,22 @@ def postExtractedData(db, data_for_gender, data_for_age, data_for_acquisition, d
     batch = db.batch()
     data_for_gender_ref = db.collection(
         u'ontarioData').document(u'data_for_gender')
-    # data_for_gender_ref.set(gender_data)
     batch.set(data_for_gender_ref, gender_data)
 
     data_for_age_ref = db.collection(
         u'ontarioData').document(u'data_for_age_group')
-    # data_for_age_ref.set(age_group_data)
     batch.set(data_for_age_ref, age_group_data)
 
     data_for_acquisition_type_ref = db.collection(
         u'ontarioData').document(u'data_for_acquisition_type')
-    # data_for_acquisition_type_ref.set(acquisition_type_data)
     batch.set(data_for_acquisition_type_ref, acquisition_type_data)
 
     data_for_outcome_type_ref = db.collection(
         u'ontarioData').document(u'data_for_outcome_type')
-    # data_for_outcome_type_ref.set(outcome_type_data)
     batch.set(data_for_outcome_type_ref, outcome_type_data)
 
     data_for_reporting_city_ref = db.collection(
         u'ontarioData').document(u'data_for_reporting_city')
-    # data_for_reporting_city_ref.set(reporting_city_data)
     batch.set(data_for_reporting_city_ref, reporting_city_data)
 
     batch.commit()
