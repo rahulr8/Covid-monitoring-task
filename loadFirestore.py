@@ -1,8 +1,8 @@
 import firebase_admin
 import requests
 import json
-from firebase_admin import credentials, firestore
 
+from firebase_admin import credentials, firestore
 from writeToDb import writeCovidDataToDb
 
 # Setup Firestore db
